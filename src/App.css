@@ -1,0 +1,615 @@
+#home {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 20px;
+}
+
+#home h1 {
+  text-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+  transition:
+    text-shadow 0.25s ease-out,
+    transform 0.25s ease-out;
+  will-change: text-shadow, transform;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  font-size: 17px;
+  font-family: var(--sans);
+  padding: 12px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  border: 2px solid transparent;
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    color-mix(in oklab, var(--accent), #000 35%)
+  );
+  box-shadow: 0 0 16px var(--accent-bg);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 60%
+  );
+  transform: translateX(-150%);
+  transition: transform 0.6s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 28px var(--accent-border),
+    var(--shadow);
+}
+
+.btn-primary:hover::after {
+  transform: translateX(150%);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Page de sélection des recettes ---- */
+
+.page-selection {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 20px;
+  text-align: left;
+}
+
+.entete-selection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.entete-selection h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.compteur-repas {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-h);
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.btn-retour {
+  font-family: var(--sans);
+  font-size: 15px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: border-color 0.2s;
+}
+
+.btn-retour:hover {
+  border-color: var(--accent-border);
+}
+
+.filtres {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--social-bg);
+}
+
+.filtres label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.filtres select,
+.filtres input[type='number'] {
+  font: 16px var(--sans);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  min-width: 110px;
+}
+
+.filtre-outils {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.filtre-outils legend {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.filtre-outils label {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.grille-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.carte {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.carte h3 {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.carte-meta {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.carte-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.badge-vegetarien {
+  background: rgba(46, 160, 67, 0.12);
+  border-color: rgba(46, 160, 67, 0.5);
+  color: #2ea043;
+  font-weight: 600;
+}
+
+.carte-ingredients {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text);
+  flex-grow: 1;
+}
+
+.carte-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-plus,
+.btn-moins {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 20px;
+  font-family: var(--sans);
+  color: #fff;
+  transition: transform 0.15s;
+}
+
+.btn-plus {
+  background: var(--accent);
+}
+
+.btn-moins {
+  background: var(--border);
+}
+
+.btn-moins:not(:disabled):hover,
+.btn-plus:hover {
+  transform: scale(1.1);
+}
+
+.btn-moins:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.carte-quantite {
+  min-width: 30px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.message-erreur {
+  color: #c7254e;
+  font-size: 17px;
+  max-width: 560px;
+  margin: 0 auto 16px;
+}
+
+/* ---- Bouton de génération ---- */
+
+.btn-generer {
+  font-size: 15px;
+  padding: 10px 20px;
+}
+
+.btn-primary:disabled {
+  cursor: default;
+  opacity: 0.45;
+  transform: none;
+}
+
+.btn-primary:disabled::after {
+  display: none;
+}
+
+/* ---- Page liste de courses ---- */
+
+.page-liste {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 24px 20px 48px;
+  text-align: left;
+}
+
+.page-liste h2 {
+  margin: 0;
+}
+
+.contenu-liste,
+.page-liste > * {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.entete-liste {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.resume-semaine {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 22px;
+  background: var(--social-bg);
+  box-sizing: border-box;
+}
+
+.resume-semaine h3,
+.rayon h3 {
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.resume-semaine h3 {
+  margin: 0 0 10px;
+}
+
+.resume-semaine ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resume-semaine li {
+  font-size: 18px;
+  color: var(--text-h);
+}
+
+.rayon {
+  margin-top: 36px;
+}
+
+.rayon h3 {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent-border);
+}
+
+.rayon ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ligne label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 19px;
+  cursor: pointer;
+  color: var(--text-h);
+}
+
+.ligne input[type='checkbox'] {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.ligne .ingredient {
+  flex: 1;
+}
+
+.ligne .quantite {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.ligne.cochee .ingredient {
+  text-decoration: line-through;
+  color: var(--text);
+}
+
+/* Sur téléphone : encore plus d'air et de lisibilité */
+@media (max-width: 640px) {
+  .page-liste {
+    padding: 20px 16px 40px;
+  }
+
+  .ligne label {
+    font-size: 21px;
+  }
+
+  .ligne input[type='checkbox'] {
+    width: 28px;
+    height: 28px;
+  }
+
+  .rayon {
+    margin-top: 48px;
+  }
+}
+
+/* ---- Page formulaire (ajouter une recette) ---- */
+
+.page-formulaire {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px 48px;
+  text-align: left;
+}
+
+.formulaire {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--social-bg);
+  box-sizing: border-box;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--text);
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.champ legend {
+  padding: 0;
+  font-size: 15px;
+}
+
+.champ-large {
+  grid-column: 1 / -1;
+}
+
+.champ input[type='text'],
+.champ input[type='number'],
+.champ select {
+  font: 17px var(--sans);
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.champ-coche {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  color: var(--text-h);
+  align-self: end;
+  padding-bottom: 10px;
+}
+
+.champ-coche input,
+.choix-outils input,
+.choix-prix input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.choix-prix,
+.choix-outils {
+  display: flex;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+}
+
+.choix-prix label,
+.choix-outils label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--text-h);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.choix-prix .prix-choisi {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
+.ligne-ingredient {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 0.7fr 1.2fr auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  margin-bottom: 4px;
+}
+
+.champ-court input,
+.champ-court select {
+  min-width: 72px;
+}
+
+.btn-supprimer-ligne {
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #c7254e;
+  border: 1px solid rgba(199, 37, 78, 0.4);
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.btn-supprimer-ligne:hover {
+  background: rgba(199, 37, 78, 0.08);
+}
+
+.btn-ajouter-ligne {
+  grid-column: 1 / -1;
+  justify-self: start;
+  font-family: var(--sans);
+  font-size: 15px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--accent);
+  border: 1px dashed var(--accent-border);
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.btn-ajouter-ligne:hover {
+  background: var(--accent-bg);
+}
+
+.actions-formulaire {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .formulaire {
+    grid-template-columns: 1fr;
+  }
+
+  .ligne-ingredient {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ligne-ingredient .champ:first-child {
+    grid-column: 1 / -1;
+  }
+}
