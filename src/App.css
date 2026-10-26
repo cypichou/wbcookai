@@ -521,13 +521,21 @@
   gap: 14px;
 }
 
+.ligne {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .ligne label {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 16px;
   font-size: 19px;
   cursor: pointer;
   color: var(--text-h);
+  min-width: 0;
 }
 
 .ligne input[type='checkbox'] {
@@ -542,14 +550,95 @@
   flex: 1;
 }
 
-.ligne .quantite {
+.controle-quantite {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.saisie-quantite {
+  width: 76px;
+  font: 17px var(--sans);
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  text-align: right;
+}
+
+.controle-quantite .unite {
   color: var(--text);
+  min-width: 56px;
+  font-size: 16px;
   white-space: nowrap;
+}
+
+.btn-retirer-ligne {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-retirer-ligne:hover {
+  border-color: rgba(199, 37, 78, 0.5);
+  color: #c7254e;
 }
 
 .ligne.cochee .ingredient {
   text-decoration: line-through;
   color: var(--text);
+}
+
+/* ---- Ajout manuel d'un article ---- */
+
+.ajout-ingredient {
+  margin-top: 36px;
+  padding: 18px 22px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--social-bg);
+  text-align: left;
+}
+
+.ajout-ingredient h3 {
+  margin: 0 0 12px;
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.champs-ajout {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.champs-ajout .champ {
+  flex: 1;
+  min-width: 130px;
+}
+
+.champs-ajout .champ-court {
+  flex: 0 0 110px;
+}
+
+.message-erreur-ajout {
+  margin: 10px 0 0;
+  font-size: 15px;
+}
+
+.ajout-ingredient .btn-ajouter-ligne {
+  margin-top: 14px;
 }
 
 /* Sur téléphone : encore plus d'air et de lisibilité */

@@ -36,7 +36,7 @@ CREATE TABLE `categories` (
   `unite` varchar(10) DEFAULT NULL,
   `rayon` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (1,'Viande','g','Protéines'),(3,'Poisson','g','Protéines'),(4,'Légume','g','Fruits et légumes'),(5,'Fruit','pièce','Fruits et légumes'),(6,'Oléagineux','g','Lipides'),(7,'Féculent','g','Féculents'),(8,'Produit laitier','ml','Produits laitiers'),(9,'Epices','c. à soupe','Condiments'),(10,'Condiments','c. à soupe','Condiments'),(14,NULL,'pièce','Protéines'),(15,NULL,'pièce','Féculents'),(16,NULL,'g','Produits laitiers'),(17,NULL,'ml','Lipides'),(18,NULL,'c. à soupe','Lipides'),(19,NULL,'g','Épicerie'),(20,NULL,'ml','Épicerie'),(21,NULL,'pièce','Épicerie'),(22,NULL,'c. à café','Condiments'),(23,NULL,'pincée','Condiments');
+INSERT INTO `categories` VALUES (1,'Viande','g','Protéines'),(3,'Poisson','g','Protéines'),(4,'Légume','g','Fruits et légumes'),(5,'Fruit','pièce','Fruits et légumes'),(6,'Oléagineux','g','Lipides'),(7,'Féculent','g','Féculents'),(8,'Produit laitier','ml','Produits laitiers'),(9,'Epices','c. à soupe','Condiments'),(10,'Condiments','c. à soupe','Condiments'),(14,NULL,'pièce','Protéines'),(15,NULL,'pièce','Féculents'),(16,NULL,'g','Produits laitiers'),(17,NULL,'ml','Lipides'),(18,NULL,'c. à soupe','Lipides'),(19,NULL,'g','Épicerie'),(20,NULL,'ml','Épicerie'),(21,NULL,'pièce','Épicerie'),(22,NULL,'c. à café','Condiments'),(23,NULL,'pincée','Condiments'),(28,NULL,'pièce','Autre'),(29,NULL,'paquet','Autre'),(30,NULL,'rouleau','Autre'),(31,NULL,'bouteille','Autre'),(32,NULL,'paquet','Épicerie'),(33,NULL,'bouteille','Épicerie'),(34,NULL,'tranche','Protéines'),(35,NULL,'tranche','Produits laitiers');
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -369,4 +369,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-26 22:03:57
+-- Dump completed on 2026-10-26 22:13:31

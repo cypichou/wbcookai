@@ -5,12 +5,16 @@
 //   1. le résumé de la semaine en haut,
 //   2. les ingrédients additionnés, groupés par rayon, avec une case
 //      à cocher par ingrédient pour le barrer en magasin.
-// L'addition elle-même est faite par MySQL (voir server/index.js).
+// La liste est ensuite MODIFIABLE à l'écran (adapter à ce qu'il y a
+// déjà dans le frigo) : quantité éditable, retrait d'une ligne, ajout
+// manuel d'un article (rayon "Autre" pour le non-alimentaire).
+// L'addition initiale est faite par MySQL (voir server/index.js) ; les
+// modifications, elles, sont locales à la page : régénérer la liste
+// repart des recettes sélectionnées.
 
 import { useEffect, useState } from 'react'
-import { genererListeCourses } from '../api'
-import { formaterQuantite } from '../format'
-import type { ListeParRayon, ResumeRepas } from '../types'
+import { chargerMeta, genererListeCourses } from '../api'
+import type { ListeParRayon, MetaCatalogue, ResumeRepas } from '../types'
 
 interface ListeCoursesProps {
   resume: ResumeRepas[]
@@ -19,7 +23,8 @@ interface ListeCoursesProps {
 
 // Ordre de passage du magasin voulu par l'utilisateur. Les rayons
 // renvoyés par l'API mais absents de cette liste (ou "Sans rayon")
-// sont affichés en fin de liste.
+// sont affichés en fin de liste. "Autre" est la zone des achats non
+// alimentaires (papier toilette, éponge...) : en toute fin de liste.
 const ORDRE_RAYONS = [
   'Protéines',
   'Féculents',
@@ -28,6 +33,7 @@ const ORDRE_RAYONS = [
   'Lipides',
   'Épicerie',
   'Condiments',
+  'Autre',
 ]
 
 export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
@@ -35,6 +41,20 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
   const [erreur, setErreur] = useState<string | null>(null)
   // identifiants des lignes cochées ("rayon|ingrédient")
   const [cochees, setCochees] = useState<Set<string>>(new Set())
+
+  // catalogue (rayons, unités) pour le formulaire d'ajout d'ingrédient
+  const [meta, setMeta] = useState<MetaCatalogue | null>(null)
+  const [nouveauNom, setNouveauNom] = useState('')
+  const [nouvelleQuantite, setNouvelleQuantite] = useState('')
+  const [nouvelleUnite, setNouvelleUnite] = useState('')
+  const [nouveauRayon, setNouveauRayon] = useState('')
+  const [erreurAjout, setErreurAjout] = useState<string | null>(null)
+
+  useEffect(() => {
+    chargerMeta()
+      .then((m) => setMeta(m))
+      .catch(() => setErreurAjout("Impossible de charger les listes (rayons, unités)."))
+  }, [])
 
   useEffect(() => {
     // pas de repas sélectionné : rien à demander à l'API
@@ -70,6 +90,79 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
       else copie.add(idLigne)
       return copie
     })
+  }
+
+  // Les modifications ci-dessous sont locales à la liste affichée :
+  // elles adaptent ce que montre l'écran, sans rien écrire en base.
+  // Régénérer la liste repart des recettes sélectionnées.
+
+  // saisie d'une nouvelle quantité pour une ligne (0 accepté le temps
+  // de la frappe ; suppression explicite via le bouton × de la ligne)
+  function changerQuantite(rayon: string, index: number, texte: string) {
+    const valeur = Number(texte)
+    setListe((precedent) => {
+      if (precedent === null) return precedent
+      const lignes = [...precedent[rayon]]
+      lignes[index] = { ...lignes[index], total: Number.isNaN(valeur) || valeur < 0 ? 0 : valeur }
+      return { ...precedent, [rayon]: lignes }
+    })
+  }
+
+  function supprimerLigne(rayon: string, index: number) {
+    setListe((precedent) => {
+      if (precedent === null) return precedent
+      const lignes = precedent[rayon].filter((_, i) => i !== index)
+      const copie = { ...precedent }
+      if (lignes.length === 0) delete copie[rayon]
+      else copie[rayon] = lignes
+      return copie
+    })
+  }
+
+  function ajouterLigne() {
+    if (liste === null) return
+    const nom = nouveauNom.trim()
+    const quantite = Number(nouvelleQuantite)
+    if (nom === '') {
+      setErreurAjout("Donne un nom à l'article.")
+      return
+    }
+    if (nouvelleQuantite === '' || Number.isNaN(quantite) || quantite <= 0) {
+      setErreurAjout('La quantité doit être un nombre supérieur à 0.')
+      return
+    }
+    if (nouveauRayon === '') {
+      setErreurAjout('Choisis un rayon.')
+      return
+    }
+    setErreurAjout(null)
+    setListe((precedent) => {
+      const copie = { ...precedent }
+      const lignes = [...(copie[nouveauRayon] ?? [])]
+      // même article et même unité dans ce rayon : on additionne
+      const existante = lignes.findIndex(
+        (l) =>
+          l.ingredient.toLowerCase() === nom.toLowerCase() &&
+          (l.unite ?? '') === nouvelleUnite,
+      )
+      if (existante >= 0) {
+        lignes[existante] = {
+          ...lignes[existante],
+          total: Number(lignes[existante].total) + quantite,
+        }
+      } else {
+        lignes.push({
+          ingredient: nom.charAt(0).toUpperCase() + nom.slice(1),
+          unite: nouvelleUnite === '' ? null : nouvelleUnite,
+          total: quantite,
+        })
+      }
+      copie[nouveauRayon] = lignes
+      return copie
+    })
+    setNouveauNom('')
+    setNouvelleQuantite('')
+    setNouvelleUnite('')
   }
 
   // Filet de sécurité : on n'arrive normalement jamais ici avec une
@@ -143,7 +236,7 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
           <div key={rayon} className="rayon">
             <h3>{rayon}</h3>
             <ul>
-              {liste[rayon].map((ligne) => {
+              {liste[rayon].map((ligne, index) => {
                 const idLigne = `${rayon}|${ligne.ingredient}`
                 const cochee = cochees.has(idLigne)
                 return (
@@ -155,10 +248,28 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
                         onChange={() => basculer(idLigne)}
                       />
                       <span className="ingredient">{ligne.ingredient}</span>
-                      <span className="quantite">
-                        {formaterQuantite(ligne.total, ligne.unite)}
-                      </span>
                     </label>
+                    <span className="controle-quantite">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        className="saisie-quantite"
+                        value={ligne.total}
+                        onChange={(e) => changerQuantite(rayon, index, e.target.value)}
+                        aria-label={`Quantité de ${ligne.ingredient}`}
+                      />
+                      <span className="unite">{ligne.unite ?? ''}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-retirer-ligne"
+                      onClick={() => supprimerLigne(rayon, index)}
+                      aria-label={`Retirer ${ligne.ingredient} de la liste`}
+                      title="Retirer de la liste"
+                    >
+                      ×
+                    </button>
                   </li>
                 )
               })}
@@ -166,6 +277,67 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
           </div>
         ))
       )}
+
+      <div className="ajout-ingredient">
+        <h3>Ajouter un article</h3>
+        {meta === null ? (
+          <p>{erreurAjout ?? 'Chargement des listes…'}</p>
+        ) : (
+          <>
+            <div className="champs-ajout">
+              <label className="champ">
+                Article
+                <input
+                  type="text"
+                  value={nouveauNom}
+                  onChange={(e) => setNouveauNom(e.target.value)}
+                  placeholder="Papier toilette"
+                />
+              </label>
+              <label className="champ champ-court">
+                Quantité
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={nouvelleQuantite}
+                  onChange={(e) => setNouvelleQuantite(e.target.value)}
+                  placeholder="2"
+                />
+              </label>
+              <label className="champ champ-court">
+                Unité
+                <select
+                  value={nouvelleUnite}
+                  onChange={(e) => setNouvelleUnite(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {meta.unites.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="champ">
+                Rayon
+                <select value={nouveauRayon} onChange={(e) => setNouveauRayon(e.target.value)}>
+                  <option value="">— Choisir —</option>
+                  {meta.rayons.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {erreurAjout && <p className="message-erreur message-erreur-ajout">{erreurAjout}</p>}
+            <button type="button" className="btn-ajouter-ligne" onClick={ajouterLigne}>
+              + ajouter à la liste
+            </button>
+          </>
+        )}
+      </div>
     </section>
   )
 }
