@@ -7,6 +7,7 @@ export interface Ingredient {
   nom: string
   quantite: number
   id_categorie: number | null
+  unite: string | null
 }
 
 export interface Outil {

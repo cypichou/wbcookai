@@ -51,11 +51,13 @@ app.get('/api/recettes', async (_req, res) => {
            i.id          AS ingredient_id,
            i.nom         AS ingredient_nom,
            i.id_categorie AS ingredient_categorie,
+           c.unite       AS ingredient_unite,
            ri.quantite
     FROM recettes r
     LEFT JOIN saisons s ON s.id = r.id_saison
     LEFT JOIN recettes_ingredients ri ON ri.id_recette = r.id
     LEFT JOIN ingredients i ON i.id = ri.id_ingredient
+    LEFT JOIN categories c ON c.id = i.id_categorie
     ORDER BY r.id, i.id
   `)
 
@@ -108,6 +110,7 @@ app.get('/api/recettes', async (_req, res) => {
         nom: l.ingredient_nom,
         quantite: l.quantite,
         id_categorie: l.ingredient_categorie,
+        unite: l.ingredient_unite,
       })
     }
     return acc

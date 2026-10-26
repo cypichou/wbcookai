@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react'
 import { genererListeCourses } from '../api'
+import { formaterQuantite } from '../format'
 import type { ListeParRayon, ResumeRepas } from '../types'
 
 interface ListeCoursesProps {
@@ -21,6 +22,7 @@ interface ListeCoursesProps {
 // sont affichés en fin de liste.
 const ORDRE_RAYONS = [
   'Protéines',
+  'Féculents',
   'Fruits et légumes',
   'Produits laitiers',
   'Lipides',
@@ -154,8 +156,7 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
                       />
                       <span className="ingredient">{ligne.ingredient}</span>
                       <span className="quantite">
-                        {ligne.total}
-                        {ligne.unite ? ` ${ligne.unite}` : ''}
+                        {formaterQuantite(ligne.total, ligne.unite)}
                       </span>
                     </label>
                   </li>

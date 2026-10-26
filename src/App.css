@@ -193,6 +193,12 @@
   border-radius: 12px;
   background: var(--bg);
   box-shadow: var(--shadow);
+  cursor: pointer; /* toute la carte ouvre les détails */
+  transition: border-color 0.2s;
+}
+
+.carte:hover {
+  border-color: var(--accent-border);
 }
 
 .carte h3 {
@@ -324,6 +330,114 @@
 
 .btn-primary:disabled::after {
   display: none;
+}
+
+/* ---- Fenêtre de détails d'une recette ---- */
+
+/* Le fond couvre l'écran et floute le site derrière */
+.fond-modale {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 8, 16, 0.35);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  overflow-y: auto;
+}
+
+.modale {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+  max-height: min(86svh, 760px);
+  overflow-y: auto;
+  padding: 26px 24px 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.modale h3 {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 26px;
+  padding-right: 40px;
+}
+
+.modale h4 {
+  margin: 0 0 8px;
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.fermer-modale {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fermer-modale:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* la note de préparation : on garde les sauts de ligne saisis */
+.modale-note p {
+  white-space: pre-line;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 155%;
+}
+
+.modale-note,
+.modale-ingredients {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--social-bg);
+}
+
+.modale-ingredients ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modale-ingredients li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.modale-quantite {
+  color: var(--text-h);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ---- Page liste de courses ---- */
@@ -521,7 +635,8 @@
 
 .champ input[type='text'],
 .champ input[type='number'],
-.champ select {
+.champ select,
+.champ textarea {
   font: 17px var(--sans);
   padding: 9px 12px;
   border-radius: 8px;
@@ -530,6 +645,12 @@
   color: var(--text-h);
   width: 100%;
   box-sizing: border-box;
+}
+
+.champ textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 150%;
 }
 
 .champ-coche {

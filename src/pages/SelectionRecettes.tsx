@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import { chargerRecettes } from '../api'
+import { formaterQuantite } from '../format'
 import type { Recette } from '../types'
 
 interface SelectionRecettesProps {
@@ -42,6 +43,8 @@ export default function SelectionRecettes({
 }: SelectionRecettesProps) {
   const [recettes, setRecettes] = useState<Recette[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
+  // recette affichée dans la fenêtre de détails (null = fenêtre fermée)
+  const [recetteOuverte, setRecetteOuverte] = useState<Recette | null>(null)
 
   // ---- état des filtres -------------------------------------------------
   const [saisonChoisie, setSaisonChoisie] = useState<string>('') // '' = toutes
@@ -79,6 +82,16 @@ export default function SelectionRecettes({
       annule = true
     }
   }, [])
+
+  // la fenêtre de détails se ferme avec la touche Échap
+  useEffect(() => {
+    if (recetteOuverte === null) return
+    function surEchap(e: KeyboardEvent) {
+      if (e.key === 'Escape') setRecetteOuverte(null)
+    }
+    window.addEventListener('keydown', surEchap)
+    return () => window.removeEventListener('keydown', surEchap)
+  }, [recetteOuverte])
 
   // ---- LE FILTRE : une seule passe .filter() ----------------------------
   // Chaque critère est un test qui répond true/false ("prédicat").
@@ -265,7 +278,11 @@ export default function SelectionRecettes({
           {recettesFiltrees.map((r) => {
             const qte = selection[r.id] ?? 0
             return (
-              <article key={r.id} className="carte">
+              <article
+                key={r.id}
+                className="carte"
+                onClick={() => setRecetteOuverte(r)}
+              >
                 <h3>{r.nom}</h3>
                 <p className="carte-meta">
                   {r.temps_de_preparation !== null && <>{r.temps_de_preparation} min</>}
@@ -289,19 +306,118 @@ export default function SelectionRecettes({
                   <button
                     type="button"
                     className="btn-moins"
-                    onClick={() => onRetirer(r.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRetirer(r.id)
+                    }}
                     disabled={qte === 0}
                   >
                     −
                   </button>
                   <span className="carte-quantite">{qte > 0 ? `×${qte}` : ''}</span>
-                  <button type="button" className="btn-plus" onClick={() => onAjouter(r.id)}>
+                  <button
+                    type="button"
+                    className="btn-plus"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onAjouter(r.id)
+                    }}
+                  >
                     +
                   </button>
                 </div>
               </article>
             )
           })}
+        </div>
+      )}
+
+      {recetteOuverte !== null && (
+        <div
+          className="fond-modale"
+          role="dialog"
+          aria-modal="true"
+          aria-label={recetteOuverte.nom}
+          onClick={() => setRecetteOuverte(null)}
+        >
+          <article
+            className="modale"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="fermer-modale"
+              onClick={() => setRecetteOuverte(null)}
+              aria-label="Fermer les détails"
+            >
+              ×
+            </button>
+
+            <h3>{recetteOuverte.nom}</h3>
+            <p className="carte-meta">
+              {recetteOuverte.temps_de_preparation !== null && (
+                <>{recetteOuverte.temps_de_preparation} min</>
+              )}
+              {recetteOuverte.prix !== null && <> · {symbolePrix(recetteOuverte.prix)}</>}
+            </p>
+            <div className="carte-badges">
+              {recetteOuverte.vegetarien && (
+                <span className="badge badge-vegetarien">Végétarien</span>
+              )}
+              {recetteOuverte.saison && <span className="badge">{recetteOuverte.saison.nom}</span>}
+              {recetteOuverte.outils.length > 0 && (
+                <span className="badge badge-outils">
+                  Nécessite : {recetteOuverte.outils.map((o) => o.nom).join(', ')}
+                </span>
+              )}
+            </div>
+
+            {recetteOuverte.consignes !== null && recetteOuverte.consignes !== '' && (
+              <div className="modale-note">
+                <h4>Préparation</h4>
+                <p>{recetteOuverte.consignes}</p>
+              </div>
+            )}
+
+            {recetteOuverte.ingredients.length > 0 && (
+              <div className="modale-ingredients">
+                <h4>Ingrédients</h4>
+                <ul>
+                  {recetteOuverte.ingredients.map((i) => (
+                    <li key={i.id}>
+                      {i.nom}
+                      <span className="modale-quantite">
+                        {formaterQuantite(i.quantite, i.unite)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="carte-actions">
+              <button
+                type="button"
+                className="btn-moins"
+                onClick={() => onRetirer(recetteOuverte.id)}
+                disabled={(selection[recetteOuverte.id] ?? 0) === 0}
+              >
+                −
+              </button>
+              <span className="carte-quantite">
+                {(selection[recetteOuverte.id] ?? 0) > 0
+                  ? `×${selection[recetteOuverte.id]}`
+                  : ''}
+              </span>
+              <button
+                type="button"
+                className="btn-plus"
+                onClick={() => onAjouter(recetteOuverte.id)}
+              >
+                +
+              </button>
+            </div>
+          </article>
         </div>
       )}
     </section>

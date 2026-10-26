@@ -36,6 +36,7 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
   const [nom, setNom] = useState('')
   const [idSaison, setIdSaison] = useState('')
   const [temps, setTemps] = useState('')
+  const [note, setNote] = useState('')
   const [vegetarien, setVegetarien] = useState(false)
   const [niveauPrix, setNiveauPrix] = useState('')
   const [outilsChoisis, setOutilsChoisis] = useState<Set<number>>(new Set())
@@ -108,6 +109,7 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
       await creerRecette({
         nom: nom.trim(),
         temps_de_preparation: temps === '' ? null : Number(temps),
+        consignes: note.trim() === '' ? null : note.trim(),
         prix: niveauPrix === '' ? null : PRIX_PAR_NIVEAU[niveauPrix],
         id_saison: Number(idSaison),
         vegetarien,
@@ -186,6 +188,16 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
             value={temps}
             onChange={(e) => setTemps(e.target.value)}
             placeholder="30"
+          />
+        </label>
+
+        <label className="champ champ-large">
+          Note — indications pour faire ce plat
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Faire revenir les oignons, ajouter la crème…"
+            rows={5}
           />
         </label>
 
