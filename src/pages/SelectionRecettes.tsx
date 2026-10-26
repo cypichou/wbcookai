@@ -31,7 +31,7 @@ function symbolePrix(prix: number): string {
   if (prix < 5) return '€€'
   return '€€€'
 }
-
+3
 export default function SelectionRecettes({
   selection,
   onAjouter,
@@ -116,9 +116,23 @@ export default function SelectionRecettes({
     })
   }
 
+  // remet tous les filtres à zéro (et re-coche tout le matériel)
+  function reinitialiserFiltres() {
+    setSaisonChoisie('')
+    setTempsMax('')
+    setFiltreVegetarien('indifferent')
+    setPrixMax('')
+    const ids = new Set<number>()
+    for (const r of recettes ?? []) {
+      for (const o of r.outils) ids.add(o.id)
+    }
+    setOutilsPossedes(ids)
+  }
+
   // au clic : on transforme la sélection (id -> quantité) en résumé
   // lisible (id, nom, quantité) et on le passe à App, qui change de page
   function generer() {
+    if (nbRepas === 0) return // le bouton est déjà désactivé, double sécurité
     const resume = recettes!
       .filter((r) => (selection[r.id] ?? 0) > 0)
       .map((r) => ({ id: r.id, nom: r.nom, quantite: selection[r.id] ?? 0 }))
@@ -165,6 +179,13 @@ export default function SelectionRecettes({
           Ajouter une recette
         </button>
       </header>
+
+      {nbRepas === 0 && (
+        <p className="message-info">
+          Ajoute au moins un repas avec le bouton « + » d'une carte pour
+          générer ta liste de courses.
+        </p>
+      )}
 
       <div className="filtres">
         <label>
@@ -233,7 +254,12 @@ export default function SelectionRecettes({
       </div>
 
       {recettesFiltrees.length === 0 ? (
-        <p>Aucune recette ne correspond à ces filtres.</p>
+        <div className="aucune-recette">
+          <p>Aucune recette ne correspond à ces filtres.</p>
+          <button type="button" className="btn-retour" onClick={reinitialiserFiltres}>
+            Réinitialiser les filtres
+          </button>
+        </div>
       ) : (
         <div className="grille-cartes">
           {recettesFiltrees.map((r) => {

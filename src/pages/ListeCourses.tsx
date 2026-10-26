@@ -35,6 +35,8 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
   const [cochees, setCochees] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    // pas de repas sélectionné : rien à demander à l'API
+    if (resume.length === 0) return
     let annule = false
 
     async function charger() {
@@ -66,6 +68,26 @@ export default function ListeCourses({ resume, onRetour }: ListeCoursesProps) {
       else copie.add(idLigne)
       return copie
     })
+  }
+
+  // Filet de sécurité : on n'arrive normalement jamais ici avec une
+  // sélection vide (le bouton est désactivé), mais un rafraîchissement
+  // direct sur cette page vide le résumé — autant le dire clairement.
+  if (resume.length === 0) {
+    return (
+      <section className="page-liste">
+        <header className="entete-liste">
+          <button type="button" className="btn-retour" onClick={onRetour}>
+            Retour aux recettes
+          </button>
+          <h2>Ma liste de courses</h2>
+        </header>
+        <p className="message-erreur">
+          Aucun repas n'est sélectionné. Retourne choisir au moins une recette
+          pour générer une liste de courses.
+        </p>
+      </section>
+    )
   }
 
   if (erreur) {

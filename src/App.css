@@ -288,6 +288,27 @@
   margin: 0 auto 16px;
 }
 
+.message-info {
+  color: var(--text);
+  font-size: 15px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.aucune-recette {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--social-bg);
+  color: var(--text);
+}
+
 /* ---- Bouton de génération ---- */
 
 .btn-generer {
@@ -419,6 +440,21 @@
 
 /* Sur téléphone : encore plus d'air et de lisibilité */
 @media (max-width: 640px) {
+  .entete-selection,
+  .entete-liste {
+    gap: 10px;
+  }
+
+  /* le titre passe sur sa propre ligne, les boutons en dessous */
+  .entete-selection h2 {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .btn-generer {
+    flex: 1;
+  }
+
   .page-liste {
     padding: 20px 16px 40px;
   }
