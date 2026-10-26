@@ -730,15 +730,10 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
-  max-height: 240px;
-  overflow-y: auto;
 }
 
 .suggestion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+  display: block;
   width: 100%;
   padding: 8px 10px;
   border: none;
@@ -752,12 +747,6 @@
 
 .suggestion:hover {
   background: var(--accent-bg);
-}
-
-.suggestion-meta {
-  font-size: 13px;
-  color: var(--text);
-  white-space: nowrap;
 }
 
 .champ-court input,

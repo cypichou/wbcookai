@@ -234,26 +234,29 @@ app.post('/api/recettes', async (req, res) => {
       }
 
       // 2) retrouver l'ingrédient par son nom, ou le créer.
-      //    La collation de la base (utf8mb4_0900_ai_ci) rend la comparaison
-      //    insensible à la casse et aux accents : "TOMATE", "tomate" ou
-      //    "tomaté" retrouvent tous l'ingrédient "Tomate". Reste le pluriel :
-      //    pour éviter une ligne "tomates" à côté de la ligne "tomate" dans
-      //    la liste de courses, si le singulier existe déjà on le réutilise.
+      //    La première lettre est forcée en majuscule : la base affiche
+      //    toujours "Tomate", jamais "tomate" (la collation rend la
+      //    comparaison insensible à la casse et aux accents, donc
+      //    "TOMATE", "tomate" ou "tomaté" retrouvent tous l'ingrédient
+      //    "Tomate"). Reste le pluriel : pour éviter une ligne "tomates"
+      //    à côté de la ligne "tomate" dans la liste de courses, si le
+      //    singulier existe déjà on le réutilise.
       const nomIngredient = ing.nom.trim()
-      const [existants] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [nomIngredient])
+      const nomAffiche = nomIngredient.charAt(0).toUpperCase() + nomIngredient.slice(1)
+      const [existants] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [nomAffiche])
       let idIngredient = null
       if (existants.length > 0) {
         idIngredient = existants[0].id
-      } else if (/[sx]$/.test(nomIngredient)) {
+      } else if (/[sx]$/.test(nomAffiche)) {
         const [singuliers] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [
-          nomIngredient.slice(0, -1),
+          nomAffiche.slice(0, -1),
         ])
         if (singuliers.length > 0) idIngredient = singuliers[0].id
       }
       if (idIngredient === null) {
         idIngredient = (
           await conn.query('INSERT INTO ingredients (nom, id_categorie) VALUES (?, ?)', [
-            nomIngredient,
+            nomAffiche,
             idCategorie,
           ])
         )[0].insertId

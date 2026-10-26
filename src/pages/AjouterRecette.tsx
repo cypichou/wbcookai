@@ -308,10 +308,7 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
                           className="suggestion"
                           onClick={() => choisirIngredient(index, s)}
                         >
-                          <span className="suggestion-nom">{s.nom}</span>
-                          <span className="suggestion-meta">
-                            {[s.rayon, s.unite].filter(Boolean).join(' · ')}
-                          </span>
+                          {s.nom}
                         </button>
                       </li>
                     ))}

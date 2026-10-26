@@ -36,7 +36,7 @@ CREATE TABLE `categories` (
   `unite` varchar(10) DEFAULT NULL,
   `rayon` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -70,7 +70,7 @@ CREATE TABLE `ingredients` (
   KEY `id_categorie` (`id_categorie`),
   CONSTRAINT `ingredients_ibfk_1` FOREIGN KEY (`id_saison`) REFERENCES `saisons` (`id`),
   CONSTRAINT `ingredients_ibfk_2` FOREIGN KEY (`id_categorie`) REFERENCES `categories` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -79,7 +79,7 @@ CREATE TABLE `ingredients` (
 
 LOCK TABLES `ingredients` WRITE;
 /*!40000 ALTER TABLE `ingredients` DISABLE KEYS */;
-INSERT INTO `ingredients` VALUES (1,'Tomate',4,0,18,1,5,1),(2,'pesto',NULL,NULL,NULL,1,5,NULL),(3,'carotte',10,1,17,1,4,2),(4,'Taglitele',10,0,20,1,7,10),(5,'Poulet',0,2,30,1,1,22),(6,'Sardines',0,10,8,1,3,23),(7,'Pommes',10,2,30,1,5,3),(8,'Amandes',3,3,3,1,6,6),(9,'Beurre',4,4,34,1,8,5),(10,'Poivres',0,0,0,1,9,0),(16,'Haricot',NULL,NULL,NULL,NULL,7,NULL),(17,'Riz',NULL,NULL,NULL,NULL,7,NULL),(18,'Ratatouille conserve',NULL,NULL,NULL,NULL,4,NULL);
+INSERT INTO `ingredients` VALUES (1,'Tomate',4,0,18,1,5,1),(2,'Pesto',NULL,NULL,NULL,1,5,NULL),(3,'Carotte',10,1,17,1,4,2),(4,'Taglitele',10,0,20,1,7,10),(5,'Poulet',0,2,30,1,1,22),(6,'Sardines',0,10,8,1,3,23),(7,'Pommes',10,2,30,1,5,3),(8,'Amandes',3,3,3,1,6,6),(9,'Beurre',4,4,34,1,8,5),(10,'Poivres',0,0,0,1,9,0),(16,'Haricot',NULL,NULL,NULL,NULL,7,NULL),(17,'Riz',NULL,NULL,NULL,NULL,7,NULL),(18,'Ratatouille conserve',NULL,NULL,NULL,NULL,4,NULL);
 /*!40000 ALTER TABLE `ingredients` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -153,7 +153,7 @@ CREATE TABLE `recettes` (
   PRIMARY KEY (`id`),
   KEY `recettes_ibfk_saison` (`id_saison`),
   CONSTRAINT `recettes_ibfk_saison` FOREIGN KEY (`id_saison`) REFERENCES `saisons` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -369,4 +369,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-26 21:31:40
+-- Dump completed on 2026-10-26 22:03:57
