@@ -196,6 +196,11 @@ app.post('/api/recettes', async (req, res) => {
     )
     const idRecette = resultat.insertId
 
+    // Après normalisation, deux lignes du formulaire peuvent désigner le
+    // même ingrédient ("tomate" et "tomates") : on additionne leurs
+    // quantités dans une map avant d'écrire, pour ne créer qu'une ligne
+    // par ingrédient (la clé primaire de recettes_ingredients l'exige).
+    const quantites = new Map() // idIngredient -> quantité totale
     for (const ing of ingredients) {
       // 1) résoudre la catégorie : id direct, ou duo (rayon, unite)
       let idCategorie
@@ -219,21 +224,39 @@ app.post('/api/recettes', async (req, res) => {
         }
       }
 
-      // 2) retrouver l'ingrédient par son nom, ou le créer
-      const [existants] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [ing.nom])
-      const idIngredient = existants.length
-        ? existants[0].id
-        : (
-            await conn.query('INSERT INTO ingredients (nom, id_categorie) VALUES (?, ?)', [
-              ing.nom,
-              idCategorie,
-            ])
-          )[0].insertId
+      // 2) retrouver l'ingrédient par son nom, ou le créer.
+      //    La collation de la base (utf8mb4_0900_ai_ci) rend la comparaison
+      //    insensible à la casse et aux accents : "TOMATE", "tomate" ou
+      //    "tomaté" retrouvent tous l'ingrédient "Tomate". Reste le pluriel :
+      //    pour éviter une ligne "tomates" à côté de la ligne "tomate" dans
+      //    la liste de courses, si le singulier existe déjà on le réutilise.
+      const nomIngredient = ing.nom.trim()
+      const [existants] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [nomIngredient])
+      let idIngredient = null
+      if (existants.length > 0) {
+        idIngredient = existants[0].id
+      } else if (/[sx]$/.test(nomIngredient)) {
+        const [singuliers] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [
+          nomIngredient.slice(0, -1),
+        ])
+        if (singuliers.length > 0) idIngredient = singuliers[0].id
+      }
+      if (idIngredient === null) {
+        idIngredient = (
+          await conn.query('INSERT INTO ingredients (nom, id_categorie) VALUES (?, ?)', [
+            nomIngredient,
+            idCategorie,
+          ])
+        )[0].insertId
+      }
+      quantites.set(idIngredient, (quantites.get(idIngredient) ?? 0) + ing.quantite)
+    }
 
-      // 3) lier recette et ingrédient avec la quantité
+    // une seule ligne par ingrédient, avec la quantité additionnée
+    for (const [idIngredient, quantite] of quantites) {
       await conn.query(
         'INSERT INTO recettes_ingredients (id_recette, id_ingredient, quantite) VALUES (?, ?, ?)',
-        [idRecette, idIngredient, ing.quantite]
+        [idRecette, idIngredient, quantite]
       )
     }
 
