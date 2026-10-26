@@ -25,11 +25,20 @@ app.get('/api/meta', async (_req, res) => {
   // plusieurs catégories les partagent.
   const [rayons] = await pool.query('SELECT DISTINCT rayon FROM categories WHERE rayon IS NOT NULL')
   const [unites] = await pool.query('SELECT DISTINCT unite FROM categories WHERE unite IS NOT NULL')
+  // les ingrédients connus, avec leur rayon et leur unité : sert à
+  // l'autocomplétion du champ "Nom" du formulaire d'ajout de recette.
+  const [ingredients] = await pool.query(`
+    SELECT i.id, i.nom, c.unite, c.rayon
+    FROM ingredients i
+    LEFT JOIN categories c ON c.id = i.id_categorie
+    ORDER BY i.nom
+  `)
   res.json({
     saisons,
     outils,
     rayons: rayons.map((r) => r.rayon),
     unites: unites.map((u) => u.unite),
+    ingredients,
   })
 })
 

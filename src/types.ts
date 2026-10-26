@@ -56,6 +56,16 @@ export interface MetaCatalogue {
   outils: { id: number; nom: string }[]
   rayons: string[]
   unites: string[]
+  ingredients: IngredientExistant[]
+}
+
+// Un ingrédient déjà en base, pour l'autocomplétion du formulaire :
+// cliquer dessus remplit nom, unité et rayon de la ligne
+export interface IngredientExistant {
+  id: number
+  nom: string
+  unite: string | null
+  rayon: string | null
 }
 
 // Corps envoyé à POST /api/recettes

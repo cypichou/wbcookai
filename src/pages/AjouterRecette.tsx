@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { chargerMeta, creerRecette } from '../api'
-import type { MetaCatalogue } from '../types'
+import type { IngredientExistant, MetaCatalogue } from '../types'
 
 interface AjouterRecetteProps {
   onRetour: () => void // abandon
@@ -42,6 +42,9 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
   const [outilsChoisis, setOutilsChoisis] = useState<Set<number>>(new Set())
 
   const [lignes, setLignes] = useState<LigneIngredient[]>([{ nom: '', quantite: '', unite: '', rayon: '' }])
+
+  // ligne dont le menu d'autocomplétion est ouvert (index, null = fermé)
+  const [menuOuvert, setMenuOuvert] = useState<number | null>(null)
 
   const [envoiEnCours, setEnvoiEnCours] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -81,6 +84,38 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
       else copie.add(id)
       return copie
     })
+  }
+
+  // ---- autocomplétion du champ "Nom" --------------------------------------
+  // Recherche insensible à la casse ET aux accents (comme la base) :
+  // "tOMAT" propose "Tomate". On ne propose que les débuts de mots
+  // ("commence par"), au plus 6 réponses.
+  function normaliser(texte: string): string {
+    return texte
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+  }
+
+  function suggestions(nom: string): IngredientExistant[] {
+    const cible = normaliser(nom)
+    if (cible === '') return []
+    return meta!
+      .ingredients.filter((i) => normaliser(i.nom).startsWith(cible))
+      .slice(0, 6)
+  }
+
+  // clic sur une suggestion : nom, unité et rayon de la ligne remplis
+  function choisirIngredient(index: number, ing: IngredientExistant) {
+    setLignes((precedent) =>
+      precedent.map((l, i) =>
+        i === index
+          ? { ...l, nom: ing.nom, unite: ing.unite ?? l.unite, rayon: ing.rayon ?? l.rayon }
+          : l,
+      ),
+    )
+    setMenuOuvert(null)
   }
 
   async function soumettre(e: React.FormEvent) {
@@ -248,14 +283,40 @@ export default function AjouterRecette({ onRetour, onCree }: AjouterRecetteProps
           <legend>Ingrédients</legend>
           {lignes.map((ligne, index) => (
             <div key={index} className="ligne-ingredient">
-              <label className="champ">
+              <label className="champ champ-nom">
                 Nom
                 <input
                   type="text"
                   value={ligne.nom}
                   onChange={(e) => modifierLigne(index, 'nom', e.target.value)}
+                  onFocus={() => setMenuOuvert(index)}
+                  onBlur={() => setMenuOuvert(null)}
                   placeholder="Oignon"
+                  autoComplete="off"
                 />
+                {menuOuvert === index && suggestions(ligne.nom).length > 0 && (
+                  <ul
+                    className="suggestions"
+                    // mousedown neutralisé : le clic sur une suggestion
+                    // passe avant le blur, sinon le menu disparaîtrait
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {suggestions(ligne.nom).map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          className="suggestion"
+                          onClick={() => choisirIngredient(index, s)}
+                        >
+                          <span className="suggestion-nom">{s.nom}</span>
+                          <span className="suggestion-meta">
+                            {[s.rayon, s.unite].filter(Boolean).join(' · ')}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </label>
               <label className="champ champ-court">
                 Quantité
