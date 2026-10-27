@@ -1,5 +1,5 @@
 // index.js — l'API complète : 3 routes, rien d'autre.
-// Express gère le HTTP, db.js gère MySQL, on assemble ici.
+// Express gère le HTTP, db.js gère PostgreSQL, on assemble ici.
 
 import express from 'express'
 import cors from 'cors'
@@ -19,15 +19,15 @@ class ErreurValidation extends Error {}
 // (saisons, équipements, rayons, unités). Sert aux formulaires.
 // ---------------------------------------------------------------------------
 app.get('/api/meta', async (_req, res) => {
-  const [saisons] = await pool.query('SELECT id, nom FROM saisons ORDER BY id')
-  const [outils] = await pool.query('SELECT id_outil AS id, nom FROM outils ORDER BY id_outil')
+  const { rows: saisons } = await pool.query('SELECT id, nom FROM saisons ORDER BY id')
+  const { rows: outils } = await pool.query('SELECT id_outil AS id, nom FROM outils ORDER BY id_outil')
   // DISTINCT : on ne veut chaque rayon/unité qu'une fois, même si
   // plusieurs catégories les partagent.
-  const [rayons] = await pool.query('SELECT DISTINCT rayon FROM categories WHERE rayon IS NOT NULL')
-  const [unites] = await pool.query('SELECT DISTINCT unite FROM categories WHERE unite IS NOT NULL')
+  const { rows: rayons } = await pool.query('SELECT DISTINCT rayon FROM categories WHERE rayon IS NOT NULL')
+  const { rows: unites } = await pool.query('SELECT DISTINCT unite FROM categories WHERE unite IS NOT NULL')
   // les ingrédients connus, avec leur rayon et leur unité : sert à
   // l'autocomplétion du champ "Nom" du formulaire d'ajout de recette.
-  const [ingredients] = await pool.query(`
+  const { rows: ingredients } = await pool.query(`
     SELECT i.id, i.nom, c.unite, c.rayon
     FROM ingredients i
     LEFT JOIN categories c ON c.id = i.id_categorie
@@ -53,7 +53,7 @@ app.get('/api/meta', async (_req, res) => {
 // Le "végétarien" est déduit : une recette est végétarienne si aucun de ses
 // ingrédients n'appartient aux catégories Viande (1) ou Poisson (3).
 app.get('/api/recettes', async (_req, res) => {
-  const [lignes] = await pool.query(`
+  const { rows: lignes } = await pool.query(`
     SELECT r.id, r.nom, r.temps_de_preparation, r.consignes, r.image_url,
            r.prix, r.id_saison, s.nom AS saison_nom,
            r.vegetarien AS vegetarien_explicite,
@@ -70,7 +70,7 @@ app.get('/api/recettes', async (_req, res) => {
     ORDER BY r.id, i.id
   `)
 
-  const [lignesOutils] = await pool.query(`
+  const { rows: lignesOutils } = await pool.query(`
     SELECT ro.id_recette, o.id_outil, o.nom AS outil_nom
     FROM recette_outils ro
     JOIN outils o ON o.id_outil = ro.id_outil
@@ -171,28 +171,33 @@ app.post('/api/recettes', async (req, res) => {
     return res.status(400).json({ erreur: 'outils doit être un tableau d\'identifiants entiers' })
   }
 
-  const conn = await pool.getConnection()
+  const conn = await pool.connect()
   try {
-    await conn.beginTransaction()
+    await conn.query('BEGIN')
 
     // les ids reçus doivent exister : on le vérifie AVANT d'écrire,
     // pour renvoyer un message clair plutôt qu'une erreur de clé
     // étrangère au milieu de la transaction
     if (id_saison != null) {
-      const [s] = await conn.query('SELECT id FROM saisons WHERE id = ?', [id_saison])
+      const { rows: s } = await conn.query('SELECT id FROM saisons WHERE id = $1', [id_saison])
       if (s.length === 0) throw new ErreurValidation('Saison inconnue : ' + id_saison)
     }
     if (idsOutils.length > 0) {
-      // IN (?) avec un tableau : mysql2 insère autant de points
-      // d'interrogation que de valeurs, chacun échappé
-      const [o] = await conn.query('SELECT COUNT(*) AS n FROM outils WHERE id_outil IN (?)', [idsOutils])
-      if (o[0].n !== idsOutils.length) {
+      // = ANY($1) : le tableau d'ids passe entier en paramètre, chacun
+      // échappé — l'équivalent Postgres du IN (?) de mysql2
+      const { rows: o } = await conn.query(
+        'SELECT COUNT(*) AS n FROM outils WHERE id_outil = ANY($1)',
+        [idsOutils],
+      )
+      // COUNT renvoie un bigint, que pg transmet en chaîne : Number() avant de comparer
+      if (Number(o[0].n) !== idsOutils.length) {
         throw new ErreurValidation('Au moins un des outils est inconnu')
       }
     }
 
-    const [resultat] = await conn.query(
-      'INSERT INTO recettes (nom, temps_de_preparation, consignes, image_url, prix, id_saison, vegetarien) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    // RETURNING id : l'équivalent Postgres de l'insertId de mysql2
+    const { rows: resultat } = await conn.query(
+      'INSERT INTO recettes (nom, temps_de_preparation, consignes, image_url, prix, id_saison, vegetarien) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
       [
         nom,
         temps_de_preparation ?? null,
@@ -203,7 +208,7 @@ app.post('/api/recettes', async (req, res) => {
         vegetarien == null ? null : vegetarien ? 1 : 0,
       ]
     )
-    const idRecette = resultat.insertId
+    const idRecette = resultat[0].id
 
     // Après normalisation, deux lignes du formulaire peuvent désigner le
     // même ingrédient ("tomate" et "tomates") : on additionne leurs
@@ -216,50 +221,51 @@ app.post('/api/recettes', async (req, res) => {
       if (ing.id_categorie !== undefined) {
         idCategorie = ing.id_categorie
       } else {
-        const [cats] = await conn.query(
-          'SELECT id FROM categories WHERE rayon = ? AND unite = ?',
+        const { rows: cats } = await conn.query(
+          'SELECT id FROM categories WHERE rayon = $1 AND unite = $2',
           [ing.rayon, ing.unite]
         )
         if (cats.length > 0) {
           idCategorie = cats[0].id
         } else {
-          idCategorie = (
-            await conn.query('INSERT INTO categories (nom, unite, rayon) VALUES (?, ?, ?)', [
-              null,
-              ing.unite,
-              ing.rayon,
-            ])
-          )[0].insertId
+          const { rows: nouvelleCat } = await conn.query(
+            'INSERT INTO categories (nom, unite, rayon) VALUES ($1, $2, $3) RETURNING id',
+            [null, ing.unite, ing.rayon]
+          )
+          idCategorie = nouvelleCat[0].id
         }
       }
 
       // 2) retrouver l'ingrédient par son nom, ou le créer.
       //    La première lettre est forcée en majuscule : la base affiche
-      //    toujours "Tomate", jamais "tomate" (la collation rend la
-      //    comparaison insensible à la casse et aux accents, donc
-      //    "TOMATE", "tomate" ou "tomaté" retrouvent tous l'ingrédient
-      //    "Tomate"). Reste le pluriel : pour éviter une ligne "tomates"
-      //    à côté de la ligne "tomate" dans la liste de courses, si le
-      //    singulier existe déjà on le réutilise.
+      //    toujours "Tomate", jamais "tomate". La comparaison lower(unaccent(...))
+      //    remplace la collation MySQL : insensible à la casse et aux
+      //    accents, donc "TOMATE", "tomate" ou "tomaté" retrouvent tous
+      //    l'ingrédient "Tomate". Reste le pluriel : pour éviter une ligne
+      //    "tomates" à côté de la ligne "tomate" dans la liste de courses,
+      //    si le singulier existe déjà on le réutilise.
       const nomIngredient = ing.nom.trim()
       const nomAffiche = nomIngredient.charAt(0).toUpperCase() + nomIngredient.slice(1)
-      const [existants] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [nomAffiche])
+      const { rows: existants } = await conn.query(
+        'SELECT id FROM ingredients WHERE lower(unaccent(nom)) = lower(unaccent($1))',
+        [nomAffiche]
+      )
       let idIngredient = null
       if (existants.length > 0) {
         idIngredient = existants[0].id
       } else if (/[sx]$/.test(nomAffiche)) {
-        const [singuliers] = await conn.query('SELECT id FROM ingredients WHERE nom = ?', [
-          nomAffiche.slice(0, -1),
-        ])
+        const { rows: singuliers } = await conn.query(
+          'SELECT id FROM ingredients WHERE lower(unaccent(nom)) = lower(unaccent($1))',
+          [nomAffiche.slice(0, -1)]
+        )
         if (singuliers.length > 0) idIngredient = singuliers[0].id
       }
       if (idIngredient === null) {
-        idIngredient = (
-          await conn.query('INSERT INTO ingredients (nom, id_categorie) VALUES (?, ?)', [
-            nomAffiche,
-            idCategorie,
-          ])
-        )[0].insertId
+        const { rows: nouvelIng } = await conn.query(
+          'INSERT INTO ingredients (nom, id_categorie) VALUES ($1, $2) RETURNING id',
+          [nomAffiche, idCategorie]
+        )
+        idIngredient = nouvelIng[0].id
       }
       quantites.set(idIngredient, (quantites.get(idIngredient) ?? 0) + ing.quantite)
     }
@@ -267,23 +273,23 @@ app.post('/api/recettes', async (req, res) => {
     // une seule ligne par ingrédient, avec la quantité additionnée
     for (const [idIngredient, quantite] of quantites) {
       await conn.query(
-        'INSERT INTO recettes_ingredients (id_recette, id_ingredient, quantite) VALUES (?, ?, ?)',
+        'INSERT INTO recettes_ingredients (id_recette, id_ingredient, quantite) VALUES ($1, $2, $3)',
         [idRecette, idIngredient, quantite]
       )
     }
 
     // 4) les outils nécessaires
     for (const idOutil of idsOutils) {
-      await conn.query('INSERT INTO recette_outils (id_outil, id_recette) VALUES (?, ?)', [
+      await conn.query('INSERT INTO recette_outils (id_outil, id_recette) VALUES ($1, $2)', [
         idOutil,
         idRecette,
       ])
     }
 
-    await conn.commit()
+    await conn.query('COMMIT')
     res.status(201).json({ id: idRecette, nom, message: 'Recette créée' })
   } catch (err) {
-    await conn.rollback()
+    await conn.query('ROLLBACK')
     if (err instanceof ErreurValidation) {
       res.status(400).json({ erreur: err.message })
     } else {
@@ -300,8 +306,8 @@ app.post('/api/recettes', async (req, res) => {
 // Corps attendu : { "recettes": [ { "id": 4, "quantite": 2 }, { "id": 9 } ] }
 // ("quantite" manquante = 1 fois la recette)
 //
-// Le gros du travail (l'addition) est fait par MySQL, pas par JavaScript.
-// On construit une petite table temporaire en mémoire avec (VALUES ROW...)
+// Le gros du travail (l'addition) est fait par PostgreSQL, pas par JavaScript.
+// On construit une petite table temporaire en mémoire avec (VALUES ...)
 // qui contient la sélection, on la joint aux ingrédients, et on laisse
 // GROUP BY + SUM faire l'addition — ligne par ligne :
 //   quantite de l'ingrédient dans la recette × nombre de fois la recette.
@@ -321,12 +327,16 @@ app.post('/api/liste-courses', async (req, res) => {
     return res.status(400).json({ erreur: 'Chaque recette doit avoir un id (entier) et une quantite > 0' })
   }
 
-  // (VALUES ROW(?, ?), ROW(?, ?)) : une ligne par recette sélectionnée,
-  // avec un "?" par valeur -> mysql2 échappe tout, pas d'injection SQL.
+  // (VALUES ($1::int, $2), ($3::int, $4)) : une ligne par recette
+  // sélectionnée, avec un paramètre numéroté par valeur -> pg échappe
+  // tout, pas d'injection SQL. Les casts ::int / ::float8 donnent à
+  // Postgres les types des colonnes de la petite table.
   const valeurs = lignes.flatMap((l) => [l.id, l.multiplicateur])
-  const placeholders = lignes.map(() => 'ROW(?, ?)').join(', ')
+  const placeholders = lignes
+    .map((_, i) => `($${i * 2 + 1}::int, $${i * 2 + 2}::float8)`)
+    .join(', ')
 
-  const [resultats] = await pool.query(
+  const { rows: resultats } = await pool.query(
     `
     SELECT c.rayon AS rayon,
            i.nom  AS ingredient,
@@ -353,7 +363,8 @@ app.post('/api/liste-courses', async (req, res) => {
   res.json(parRayon)
 })
 
-const PORT = 3000
+// PORT est fourni par l'hébergeur (Render) en production, 3000 en local.
+const PORT = process.env.PORT ?? 3000
 app.listen(PORT, () => {
   console.log(`API démarrée sur http://localhost:${PORT}`)
 })
