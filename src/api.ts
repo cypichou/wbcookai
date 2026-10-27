@@ -4,7 +4,10 @@
 
 import type { CreerRecettePayload, ListeParRayon, MetaCatalogue, Recette } from './types'
 
-export const API_URL = 'http://localhost:3000'
+// En production (GitHub Pages), l'adresse de l'API Render est injectée à la
+// construction via la variable d'environnement VITE_API_URL. En local,
+// `npm run dev` n'a pas besoin de la définir : on retombe sur l'API locale.
+export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 // petit utilitaire interne : fetch + vérification du statut HTTP
 async function verifier(reponse: Response): Promise<Response> {

@@ -1,0 +1,45 @@
+name: Deploy front to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub Pages a besoin de ces permissions pour recevoir l'artifact du build.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# un seul déploiement à la fois : un nouveau push annule l'ancien en cours
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          # l'adresse de l'API Render, figée dans le site au moment du build
+          VITE_API_URL: https://cook-api-3x7a.onrender.com
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
